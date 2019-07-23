@@ -27,14 +27,14 @@ Done:
     Fixed spammy "Drop session not active"
     
 """
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, User, ParseMode
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
-from datetime import datetime, time, timedelta, tzinfo
-from InstagramAPI import InstagramAPI
-from collections import defaultdict
-import pytz
-import requests
+from datetime import datetime, time, timedelta
 import logging
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
+from InstagramAPI import InstagramAPI
+import pytz
+
 
 
 # Enable logging
@@ -66,24 +66,23 @@ utc = pytz.UTC
 # update. Error handlers also receive the raised TelegramError object in error.
 
 
-def countdown(HH,MM):
+def countdown(HH, MM):
     now = datetime.now(tz=utc)
-    target_hour = datetime(year=now.year, month=now.month, 
-                        day=now.day, hour=HH, minute=MM, second=0, tzinfo=utc)
-    return(target_hour - datetime.now(tz=utc).replace(microsecond = 0))
+    target_hour = datetime(year=now.year, month=now.month, day=now.day, hour=HH, minute=MM, second=0, tzinfo=utc)
+    return target_hour - datetime.now(tz=utc).replace(microsecond=0)
 
 
 
 def interval(message_time):
-    if((check_in_interval(time(23,30),time(00,00), message_time)) or #11:30 PM - 12:00 AM UTC
-           (check_in_interval(time(2,30),time(3,00), message_time))or #2:30 AM - 3:00 AM UTC
-           (check_in_interval(time(5,30),time(6,00), message_time))or #5:30 AM - 6:00 AM UTC
-           (check_in_interval(time(8,30),time(9,00), message_time))or #8:30 AM - 9:00 AM UTC
-           (check_in_interval(time(11,30),time(12,00), message_time))or #11:30 AM - 12:00 PM UTC
-           (check_in_interval(time(14,30),time(15,00), message_time))or #2:30 PM - 3:00 PM UTC
-           (check_in_interval(time(17,30),time(18,00), message_time))or #5:30 PM - 6:00 PM UTC
-           (check_in_interval(time(20,30),time(21,00), message_time))):    #8:30 PM - 9:00 PM UTC
-           return True
+    if (check_in_interval(time(23,30), time(00,00), message_time) or #11:30 PM - 12:00 AM UTC
+            check_in_interval(time(2,30), time(3,00), message_time)or #2:30 AM - 3:00 AM UTC
+            check_in_interval(time(5,30), time(6,00), message_time)or #5:30 AM - 6:00 AM UTC
+            check_in_interval(time(8,30), time(9,00), message_time)or #8:30 AM - 9:00 AM UTC
+            check_in_interval(time(11,30), time(12,00), message_time)or #11:30 AM - 12:00 PM UTC
+            check_in_interval(time(14,30), time(15,00), message_time)or #2:30 PM - 3:00 PM UTC
+            check_in_interval(time(17,30), time(18,00), message_time)or #5:30 PM - 6:00 PM UTC
+            check_in_interval(time(20,30), time(21,00), message_time)): #8:30 PM - 9:00 PM UTC
+            return True
     else:
         return False
 
@@ -113,12 +112,12 @@ def clear_contents(bot, job):
 
 
 def server_start(bot, job):
-    bot.send_message(chat_id = groupchatid, text="Server has started or restarted!\n\nCurrent server time is {} UTC.\n\nTo see what was changed and bot info type /version.".format(str(datetime.now(tz=utc).time().replace(microsecond=0))))
+    bot.send_message(chat_id=groupchatid, text="Server has started or restarted!\n\nCurrent server time is {} UTC.\n\nTo see what was changed and bot info type /version.".format(str(datetime.now(tz=utc).time().replace(microsecond=0))))
     print("Server has started!")
     
 
 def start_drop_message(bot, job):
-    bot.send_message(chat_id = groupchatid, text="✅Drop Session Started✅\n\nDrop session will end and round will start at {} UTC.\nDrop usernames (Example: @username1).".format((datetime.utcnow().replace(microsecond=0)) + timedelta(minutes = 30)))
+    bot.send_message(chat_id=groupchatid, text="✅Drop Session Started✅\n\nDrop session will end and round will start at {} UTC.\nDrop usernames (Example: @username1).".format((datetime.utcnow().replace(microsecond=0)) + timedelta(minutes=30)))
 
 
 def start_round_message(bot, job):
@@ -131,8 +130,8 @@ def start_round_message(bot, job):
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    bot.send_message(chat_id = groupchatid, text="🛑Drop Session Ended🛑")
-    bot.send_message(chat_id = groupchatid, text="✅Engagement Round Started✅\nTotal usernames: {}\nTotal participants: {}\nYou have 1 hour to like and comment on user's most recent post.\nMake sure you have Private Messaged (PM) me before you choose the list that you want from below:".format(len(usernames_from_contents), len(users_from_contents)), reply_markup=reply_markup)
+    bot.send_message(chat_id=groupchatid, text="🛑Drop Session Ended🛑")
+    bot.send_message(chat_id=groupchatid, text="✅Engagement Round Started✅\nTotal usernames: {}\nTotal participants: {}\nYou have 1 hour to like and comment on user's most recent post.\nMake sure you have Private Messaged (PM) me before you choose the list that you want from below:".format(len(usernames_from_contents), len(users_from_contents)), reply_markup=reply_markup)
 
     
 
@@ -140,12 +139,12 @@ def button(bot, update):
     query = update.callback_query
     user = update.callback_query.from_user.id
 
-    bot.send_message(chat_id = user, text="Selected option: {}".format(query.data))
-    if(query.data == 'DM List'):
+    bot.send_message(chat_id=user, text="Selected option: {}".format(query.data))
+    if query.data == 'DM List':
         print_users_dm(bot, update, user)
-    elif(query.data == 'iPhone List'):
+    elif query.data == 'iPhone List':
         print_users_iphone(bot, update, user)
-    elif(query.data == 'Android List'):
+    elif query.data == 'Android List':
         print_users_android(bot, update, user)
 
 
@@ -154,14 +153,14 @@ def initiate_drop_session(bot, update):
     message_time = datetime.now(tz=utc).time()
     groupchat = update.message.chat.id
     print(groupchat)
-    if(groupchat == groupchatid):
+    if groupchat == groupchatid:
         print(update.message.text + ' ' + str(message_time))
         t = update.message.text    
-        if(interval(message_time)):                          
-            if('@' in t):
-                if(API.searchUsername(update.message.text.replace('@', ''))):
+        if interval(message_time):                          
+            if '@' in t:
+                if API.searchUsername(update.message.text.replace('@', '')):
                     try:
-                        if(1 <= len(contents[update.message.from_user.id]) < 3):
+                        if 1 <= len(contents[update.message.from_user.id]) < 3:
                             contents[update.message.from_user.id].append(update.message.text)
                             update.message.reply_text(update.message.text + " received! " + str(len(contents[update.message.from_user.id])) + "/3 ✅")
                             print(contents)
@@ -171,7 +170,7 @@ def initiate_drop_session(bot, update):
                             print(contents)
                         
                     except:
-                        contents[update.message.from_user.id]=[update.message.text]
+                        contents[update.message.from_user.id] = [update.message.text]
                         update.message.reply_text(update.message.text + " received! " + str(len(contents[update.message.from_user.id])) + "/3 ✅")    
                         print(contents)
                         list_len = len(contents)
@@ -188,7 +187,7 @@ def initiate_drop_session(bot, update):
         update.message.reply_text("You may only give the bot commands in this chat🛑\nTo drop usernames, you must be in the group chat during round time. Click or type \"/help\" for help.")
 
 def end_round_message(bot, job):
-    bot.send_message(chat_id = groupchatid, text="✅Round Completed✅\n\nNext round is at {} UTC.\n\nDrop session will start 30 minutes prior. Use /round to check round and server time.".format((datetime.utcnow().replace(microsecond=0)) + timedelta(hours = 1, minutes = 30)))
+    bot.send_message(chat_id=groupchatid, text="✅Round Completed✅\n\nNext round is at {} UTC.\n\nDrop session will start 30 minutes prior. Use /round to check round and server time.".format((datetime.utcnow().replace(microsecond=0)) + timedelta(hours=1, minutes=30)))
 
 ################################################# Print users ############################################################3
 
@@ -200,13 +199,13 @@ def print_users_dm(bot, update, user): #DM list
     list_len = len(usernames_from_contents)
 
     for x in range(0, 90, 10):
-        if (list_len > x):
-            bot.send_message(chat_id = user, text="🔶List {}🔶\n".format(int(x/10 + 1))+'\n'.join(str(p) for p in usernames_from_contents[x:x+10]))
+        if list_len > x:
+            bot.send_message(chat_id=user, text="🔶List {}🔶\n".format(int(x/10 + 1))+'\n'.join(str(p) for p in usernames_from_contents[x:x+10]))
         else:
             break
   
 
-def print_users_iphone(bot,update, user): #link version of list
+def print_users_iphone(bot, update, user): #link version of list
 
     list_len = len(usernames_from_contents)
     content = [w.replace('@', '') for w in usernames_from_contents]
@@ -215,12 +214,12 @@ def print_users_iphone(bot,update, user): #link version of list
     print(url_content)
 
     for x in range(0, 90, 10):
-        if (list_len > x):
-            bot.send_message(chat_id = user, text="🔶List {}🔶\n".format(int(x/10 + 1))+'\n'.join(str(p) for p in url_content[x:x+10]), disable_web_page_preview = True)
+        if list_len > x:
+            bot.send_message(chat_id=user, text="🔶List {}🔶\n".format(int(x/10 + 1))+'\n'.join(str(p) for p in url_content[x:x+10]), disable_web_page_preview=True)
         else:
             break
 
-def print_users_android(bot,update, user): #link version of list
+def print_users_android(bot, update, user): #link version of list
 
     list_len = len(usernames_from_contents)
     content = [w.replace('@', '') for w in usernames_from_contents]
@@ -229,8 +228,8 @@ def print_users_android(bot,update, user): #link version of list
     print(url_content)
 
     for x in range(0, 90, 10):
-        if (list_len > x):
-            bot.send_message(chat_id = user, text="🔶List {}🔶\n".format(int(x/10 + 1))+'\n'.join(str(p) for p in url_content[x:x+10]), disable_web_page_preview = True)
+        if list_len > x:
+            bot.send_message(chat_id=user, text="🔶List {}🔶\n".format(int(x/10 + 1))+'\n'.join(str(p) for p in url_content[x:x+10]), disable_web_page_preview=True)
         else:
             break
 
@@ -265,28 +264,28 @@ def contact(bot, update):
 
 def round(bot, update):
 
-    if(check_in_interval(time(3,00),time(5,30), datetime.now(tz=utc).time())):
+    if check_in_interval(time(3,00), time(5,30), datetime.now(tz=utc).time()):
         update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(5,30)))
 
-    elif(check_in_interval(time(6,00),time(8,30), datetime.now(tz=utc).time())):
+    elif check_in_interval(time(6,00), time(8,30), datetime.now(tz=utc).time()):
         update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(8,30)))
 
-    elif(check_in_interval(time(9,00),time(11,30), datetime.now(tz=utc).time())):
+    elif check_in_interval(time(9,00), time(11,30), datetime.now(tz=utc).time()):
         update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(11,30)))
         
-    elif(check_in_interval(time(12,00),time(14,30), datetime.now(tz=utc).time())):
+    elif check_in_interval(time(12,00), time(14,30), datetime.now(tz=utc).time()):
         update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(14,30)))
         
-    elif(check_in_interval(time(15,00),time(17,30), datetime.now(tz=utc).time())):
+    elif check_in_interval(time(15,00), time(17,30), datetime.now(tz=utc).time()):
         update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(17,30)))
         
-    elif(check_in_interval(time(18,00),time(20,30), datetime.now(tz=utc).time())):
+    elif check_in_interval(time(18,00), time(20,30), datetime.now(tz=utc).time()):
         update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(20,30)))
         
-    elif(check_in_interval(time(21,00),time(23,30), datetime.now(tz=utc).time())):
+    elif check_in_interval(time(21,00), time(23,30), datetime.now(tz=utc).time()):
         update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(23,30)))
         
-    elif(check_in_interval(time(0,00),time(2,30), datetime.now(tz=utc).time())):
+    elif check_in_interval(time(0,00), time(2,30), datetime.now(tz=utc).time()):
         update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(2,30)))
     
     else:
@@ -306,9 +305,9 @@ def remove(bot, update):
     message_time = datetime.now(tz=utc).time()
     groupchat = update.message.chat.id
     print(groupchat)
-    if(groupchat == groupchatid):
+    if groupchat == groupchatid:
         print(update.message.text + ' ' + str(message_time))
-        if(interval(message_time)):
+        if interval(message_time):
             try:
                 contents.pop(update.message.from_user.id)
                 print(contents)
@@ -387,45 +386,45 @@ def main():
 ###################### TIME INTERVALS FOR MESSAGES. ALL IN EASTERN TIME ############################################
     
     for time_ in [datetime(2000, 1, 1, hour=23, minute=30).time(), #23:30
-    datetime(2000, 1, 1, hour=2, minute=30).time(),                 #2:30
-    datetime(2000, 1, 1, hour=5, minute=30).time(),                  #5:30
-    datetime(2000, 1, 1, hour=8, minute=30).time(),                  #8:30
-    datetime(2000, 1, 1, hour=11, minute=30).time(),                  #11:30
-    datetime(2000, 1, 1, hour=14, minute=30).time(),                  #14:30
-    datetime(2000, 1, 1, hour=17, minute=30).time(),                 #17:30
-    datetime(2000, 1, 1, hour=20, minute=30).time()]:                #20:30
-        j.run_daily(start_drop_message, time_)
+                  datetime(2000, 1, 1, hour=2, minute=30).time(),                 #2:30
+                  datetime(2000, 1, 1, hour=5, minute=30).time(),                  #5:30
+                  datetime(2000, 1, 1, hour=8, minute=30).time(),                  #8:30
+                  datetime(2000, 1, 1, hour=11, minute=30).time(),                  #11:30
+                  datetime(2000, 1, 1, hour=14, minute=30).time(),                  #14:30
+                  datetime(2000, 1, 1, hour=17, minute=30).time(),                 #17:30
+                  datetime(2000, 1, 1, hour=20, minute=30).time()]:                #20:30
+                  j.run_daily(start_drop_message, time_)
 
 
     for time_ in [datetime(2000, 1, 1, hour=0, minute=00).time(), #0:00 UTC
-    datetime(2000, 1, 1, hour=3, minute=00).time(),                #3:00 UTC
-    datetime(2000, 1, 1, hour=6, minute=00).time(),                 #6:00 UTC
-    datetime(2000, 1, 1, hour=9, minute=00).time(),                 #9:00 UTC
-    datetime(2000, 1, 1, hour=12, minute=00).time(),                 #12:00 UTC
-    datetime(2000, 1, 1, hour=15, minute=00).time(),                #15:00 UTC
-    datetime(2000, 1, 1, hour=18, minute=00).time(),                #18:00 UTC
-    datetime(2000, 1, 1, hour=21, minute=00).time()]:               #21:00 UTC
-        j.run_daily(start_round_message, time_)
+                  datetime(2000, 1, 1, hour=3, minute=00).time(),                #3:00 UTC
+                  datetime(2000, 1, 1, hour=6, minute=00).time(),                 #6:00 UTC
+                  datetime(2000, 1, 1, hour=9, minute=00).time(),                 #9:00 UTC
+                  datetime(2000, 1, 1, hour=12, minute=00).time(),                 #12:00 UTC
+                  datetime(2000, 1, 1, hour=15, minute=00).time(),                #15:00 UTC
+                  datetime(2000, 1, 1, hour=18, minute=00).time(),                #18:00 UTC
+                  datetime(2000, 1, 1, hour=21, minute=00).time()]:               #21:00 UTC
+                  j.run_daily(start_round_message, time_)
 
     for time_ in [datetime(2000, 1, 1, hour=0+1, minute=00).time(), #1:00 UTC
-    datetime(2000, 1, 1, hour=3+1, minute=00).time(),                #4:00 UTC
-    datetime(2000, 1, 1, hour=6+1, minute=00).time(),                 #7:00 UTC
-    datetime(2000, 1, 1, hour=9+1, minute=00).time(),                 #10:00 UTC
-    datetime(2000, 1, 1, hour=12+1, minute=00).time(),                 #13:00 UTC
-    datetime(2000, 1, 1, hour=15+1, minute=00).time(),                #16:00 UTC
-    datetime(2000, 1, 1, hour=18+1, minute=00).time(),                #19:00 UTC
-    datetime(2000, 1, 1, hour=21+1, minute=00).time()]:               #22:00 UTC
-        j.run_daily(end_round_message, time_)
+                  datetime(2000, 1, 1, hour=3+1, minute=00).time(),                #4:00 UTC
+                  datetime(2000, 1, 1, hour=6+1, minute=00).time(),                 #7:00 UTC
+                  datetime(2000, 1, 1, hour=9+1, minute=00).time(),                 #10:00 UTC
+                  datetime(2000, 1, 1, hour=12+1, minute=00).time(),                 #13:00 UTC
+                  datetime(2000, 1, 1, hour=15+1, minute=00).time(),                #16:00 UTC
+                  datetime(2000, 1, 1, hour=18+1, minute=00).time(),                #19:00 UTC
+                  datetime(2000, 1, 1, hour=21+1, minute=00).time()]:               #22:00 UTC
+                  j.run_daily(end_round_message, time_)
 
     for time_ in [datetime(2000, 1, 1, hour=0+1, minute=00+58).time(), #1:58 UTC
-    datetime(2000, 1, 1, hour=3+1, minute=00+58).time(),                #4:58 UTC
-    datetime(2000, 1, 1, hour=6+1, minute=00+58).time(),                 #7:58 UTC
-    datetime(2000, 1, 1, hour=9+1, minute=00+58).time(),                 #10:58 UTC
-    datetime(2000, 1, 1, hour=12+1, minute=00+58).time(),                 #13:58 UTC
-    datetime(2000, 1, 1, hour=15+1, minute=00+58).time(),                #16:58 UTC
-    datetime(2000, 1, 1, hour=18+1, minute=00+58).time(),                #19:58 UTC
-    datetime(2000, 1, 1, hour=21+1, minute=00+58).time()]:               #22:58 UTC
-        j.run_daily(clear_contents, time_)
+                  datetime(2000, 1, 1, hour=3+1, minute=00+58).time(),                #4:58 UTC
+                  datetime(2000, 1, 1, hour=6+1, minute=00+58).time(),                 #7:58 UTC
+                  datetime(2000, 1, 1, hour=9+1, minute=00+58).time(),                 #10:58 UTC
+                  datetime(2000, 1, 1, hour=12+1, minute=00+58).time(),                 #13:58 UTC
+                  datetime(2000, 1, 1, hour=15+1, minute=00+58).time(),                #16:58 UTC
+                  datetime(2000, 1, 1, hour=18+1, minute=00+58).time(),                #19:58 UTC
+                  datetime(2000, 1, 1, hour=21+1, minute=00+58).time()]:               #22:58 UTC
+                  j.run_daily(clear_contents, time_)
 
 
 ########################################################################################################
