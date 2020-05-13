@@ -36,7 +36,6 @@ from InstagramAPI import InstagramAPI
 import pytz
 
 
-
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -44,23 +43,22 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-bot_token = "TOKEN"
-groupchatid = "ID" #group chat id
+BOT_TOKEN = "TOKEN"
 
-IG_username = 'user'
-IG_password = 'pass'
+# group chat id (integer). This is the group chat that you want your bot to participate in.
+GROUPCHATID = 1234567890
 
+# Instagram usernames for checking if valid unsernames
+IG_USERNAME = 'user'
+IG_PASSWORD = 'pass'
 
-##############################    Important definitions    ##############################
-
-API = InstagramAPI(IG_username, IG_password)
+API = InstagramAPI(IG_USERNAME, IG_PASSWORD)
 
 contents = {}
 usernames_from_contents = []
 users_from_contents = []
 
 utc = pytz.UTC
-##########################################################################################
 
 # Define a few command handlers. These usually take the two arguments bot and
 # update. Error handlers also receive the raised TelegramError object in error.
@@ -68,31 +66,37 @@ utc = pytz.UTC
 
 def countdown(HH, MM):
     now = datetime.now(tz=utc)
-    target_hour = datetime(year=now.year, month=now.month, day=now.day, hour=HH, minute=MM, second=0, tzinfo=utc)
+    target_hour = datetime(year=now.year, month=now.month,
+                           day=now.day, hour=HH, minute=MM, second=0, tzinfo=utc)
     return target_hour - datetime.now(tz=utc).replace(microsecond=0)
 
 
-
 def interval(message_time):
-    if (check_in_interval(time(23,30), time(00,00), message_time) or #11:30 PM - 12:00 AM UTC
-            check_in_interval(time(2,30), time(3,00), message_time)or #2:30 AM - 3:00 AM UTC
-            check_in_interval(time(5,30), time(6,00), message_time)or #5:30 AM - 6:00 AM UTC
-            check_in_interval(time(8,30), time(9,00), message_time)or #8:30 AM - 9:00 AM UTC
-            check_in_interval(time(11,30), time(12,00), message_time)or #11:30 AM - 12:00 PM UTC
-            check_in_interval(time(14,30), time(15,00), message_time)or #2:30 PM - 3:00 PM UTC
-            check_in_interval(time(17,30), time(18,00), message_time)or #5:30 PM - 6:00 PM UTC
-            check_in_interval(time(20,30), time(21,00), message_time)): #8:30 PM - 9:00 PM UTC
-            return True
-    else:
-        return False
+    if (check_in_interval(time(23, 30), time(00, 00), message_time) or  # 11:30 PM - 12:00 AM UTC
+            # 2:30 AM - 3:00 AM UTC
+            check_in_interval(time(2, 30), time(3, 00), message_time)or
+            # 5:30 AM - 6:00 AM UTC
+            check_in_interval(time(5, 30), time(6, 00), message_time)or
+            # 8:30 AM - 9:00 AM UTC
+            check_in_interval(time(8, 30), time(9, 00), message_time)or
+            # 11:30 AM - 12:00 PM UTC
+            check_in_interval(time(11, 30), time(12, 00), message_time)or
+            # 2:30 PM - 3:00 PM UTC
+            check_in_interval(time(14, 30), time(15, 00), message_time)or
+            # 5:30 PM - 6:00 PM UTC
+            check_in_interval(time(17, 30), time(18, 00), message_time)or
+            check_in_interval(time(20, 30), time(21, 00), message_time)):  # 8:30 PM - 9:00 PM UTC
+        return True
+    return False
+
 
 def check_in_interval(startTime, endTime, nowTime):
     #nowTime = nowTime or datetime.utcnow().time()
     if startTime < endTime:
         return nowTime >= startTime and nowTime <= endTime
-    else: #Over midnight
+    else:  # Over midnight
         return nowTime >= startTime or nowTime <= endTime
-        
+
 
 def extract_contents():
     for usernames in contents.keys():
@@ -100,6 +104,7 @@ def extract_contents():
 
     for users in contents:
         users_from_contents.append(users)
+
 
 def clear_contents(bot, job):
     contents.clear()
@@ -112,34 +117,38 @@ def clear_contents(bot, job):
 
 
 def server_start(bot, job):
-    bot.send_message(chat_id=groupchatid, text="Server has started or restarted!\n\nCurrent server time is {} UTC.\n\nTo see what was changed and bot info type /version.".format(str(datetime.now(tz=utc).time().replace(microsecond=0))))
+    bot.send_message(chat_id=GROUPCHATID, text="Server has started or restarted!\n\nCurrent server time is {} UTC.\n\nTo see what was changed and bot info type /version.".format(
+        str(datetime.now(tz=utc).time().replace(microsecond=0))))
     print("Server has started!")
-    
+
 
 def start_drop_message(bot, job):
-    bot.send_message(chat_id=groupchatid, text="✅Drop Session Started✅\n\nDrop session will end and round will start at {} UTC.\nDrop usernames (Example: @username1).".format((datetime.utcnow().replace(microsecond=0)) + timedelta(minutes=30)))
+    bot.send_message(chat_id=GROUPCHATID, text="✅Drop Session Started✅\n\nDrop session will end and round will start at {} UTC.\nDrop usernames (Example: @username1).".format(
+        (datetime.utcnow().replace(microsecond=0)) + timedelta(minutes=30)))
 
 
 def start_round_message(bot, job):
 
     extract_contents()
-    
+
     keyboard = [[InlineKeyboardButton("📤DM List📤", callback_data='DM List')],
-                [InlineKeyboardButton("📱iPhone List📱", callback_data='iPhone List')],
+                [InlineKeyboardButton(
+                    "📱iPhone List📱", callback_data='iPhone List')],
                 [InlineKeyboardButton("☎Android List☎", callback_data='Android List')]]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    bot.send_message(chat_id=groupchatid, text="🛑Drop Session Ended🛑")
-    bot.send_message(chat_id=groupchatid, text="✅Engagement Round Started✅\nTotal usernames: {}\nTotal participants: {}\nYou have 1 hour to like and comment on user's most recent post.\nMake sure you have Private Messaged (PM) me before you choose the list that you want from below:".format(len(usernames_from_contents), len(users_from_contents)), reply_markup=reply_markup)
+    bot.send_message(chat_id=GROUPCHATID, text="🛑Drop Session Ended🛑")
+    bot.send_message(chat_id=GROUPCHATID, text="✅Engagement Round Started✅\nTotal usernames: {}\nTotal participants: {}\nYou have 1 hour to like and comment on user's most recent post.\nMake sure you have Private Messaged (PM) me before you choose the list that you want from below:".format(
+        len(usernames_from_contents), len(users_from_contents)), reply_markup=reply_markup)
 
-    
 
-def button(bot, update): 
+def button(bot, update):
     query = update.callback_query
     user = update.callback_query.from_user.id
 
-    bot.send_message(chat_id=user, text="Selected option: {}".format(query.data))
+    bot.send_message(
+        chat_id=user, text="Selected option: {}".format(query.data))
     if query.data == 'DM List':
         print_users_dm(bot, update, user)
     elif query.data == 'iPhone List':
@@ -148,51 +157,61 @@ def button(bot, update):
         print_users_android(bot, update, user)
 
 
-def initiate_drop_session(bot, update):                                                                   
-  
+def initiate_drop_session(bot, update):
+
     message_time = datetime.now(tz=utc).time()
-    groupchat = update.message.chat.id
-    print(groupchat)
-    if groupchat == groupchatid:
+    currentGroupChatID = update.message.chat.id
+    print(currentGroupChatID)
+    if currentGroupChatID == GROUPCHATID:
         print(update.message.text + ' ' + str(message_time))
-        t = update.message.text    
-        if interval(message_time):                          
+        t = update.message.text
+        if interval(message_time):
             if '@' in t:
                 if API.searchUsername(update.message.text.replace('@', '')):
                     try:
                         if 1 <= len(contents[update.message.from_user.id]) < 3:
-                            contents[update.message.from_user.id].append(update.message.text)
-                            update.message.reply_text(update.message.text + " received! " + str(len(contents[update.message.from_user.id])) + "/3 ✅")
+                            contents[update.message.from_user.id].append(
+                                update.message.text)
+                            update.message.reply_text(update.message.text + " received! " + str(
+                                len(contents[update.message.from_user.id])) + "/3 ✅")
                             print(contents)
 
                         else:
-                            update.message.reply_text("Limit reached. You cannot enter anymore usernames🛑")
+                            update.message.reply_text(
+                                "Limit reached. You cannot enter anymore usernames🛑")
                             print(contents)
-                        
+
                     except:
-                        contents[update.message.from_user.id] = [update.message.text]
-                        update.message.reply_text(update.message.text + " received! " + str(len(contents[update.message.from_user.id])) + "/3 ✅")    
+                        contents[update.message.from_user.id] = [
+                            update.message.text]
+                        update.message.reply_text(update.message.text + " received! " + str(
+                            len(contents[update.message.from_user.id])) + "/3 ✅")
                         print(contents)
                         list_len = len(contents)
                         print(list_len)
                 else:
-                    update.message.reply_text("Username does not exist on Instagram🛑")      
+                    update.message.reply_text(
+                        "Username does not exist on Instagram🛑")
             else:
-                update.message.reply_text("Invalid username format🛑\nMake sure you include \"@\" sign when entering username. Example: @username")
-                
-        #else:
+                update.message.reply_text(
+                    "Invalid username format🛑\nMake sure you include \"@\" sign when entering username. Example: @username")
+
+        # else:
         #    update.message.reply_text("Drop session not active🛑")
-        
+
     else:
-        update.message.reply_text("You may only give the bot commands in this chat🛑\nTo drop usernames, you must be in the group chat during round time. Click or type \"/help\" for help.")
+        update.message.reply_text(
+            "You may only give the bot commands in this chat🛑\nTo drop usernames, you must be in the group chat during round time. Click or type \"/help\" for help.")
+
 
 def end_round_message(bot, job):
-    bot.send_message(chat_id=groupchatid, text="✅Round Completed✅\n\nNext round is at {} UTC.\n\nDrop session will start 30 minutes prior. Use /round to check round and server time.".format((datetime.utcnow().replace(microsecond=0)) + timedelta(hours=1, minutes=30)))
+    bot.send_message(chat_id=GROUPCHATID, text="✅Round Completed✅\n\nNext round is at {} UTC.\n\nDrop session will start 30 minutes prior. Use /round to check round and server time.".format(
+        (datetime.utcnow().replace(microsecond=0)) + timedelta(hours=1, minutes=30)))
 
-################################################# Print users ############################################################3
+# Print users ############################################################3
 
 
-def print_users_dm(bot, update, user): #DM list
+def print_users_dm(bot, update, user):  # DM list
     for p in usernames_from_contents:
         print(p)
 
@@ -200,36 +219,40 @@ def print_users_dm(bot, update, user): #DM list
 
     for x in range(0, 90, 10):
         if list_len > x:
-            bot.send_message(chat_id=user, text="🔶List {}🔶\n".format(int(x/10 + 1))+'\n'.join(str(p) for p in usernames_from_contents[x:x+10]))
+            bot.send_message(chat_id=user, text="🔶List {}🔶\n".format(
+                int(x/10 + 1))+'\n'.join(str(p) for p in usernames_from_contents[x:x+10]))
         else:
             break
-  
 
-def print_users_iphone(bot, update, user): #link version of list
+
+def print_users_iphone(bot, update, user):  # link version of list
 
     list_len = len(usernames_from_contents)
     content = [w.replace('@', '') for w in usernames_from_contents]
     url_content = ["www.instagram.com/" + i for i in content]
-    
+
     print(url_content)
 
     for x in range(0, 90, 10):
         if list_len > x:
-            bot.send_message(chat_id=user, text="🔶List {}🔶\n".format(int(x/10 + 1))+'\n'.join(str(p) for p in url_content[x:x+10]), disable_web_page_preview=True)
+            bot.send_message(chat_id=user, text="🔶List {}🔶\n".format(int(
+                x/10 + 1))+'\n'.join(str(p) for p in url_content[x:x+10]), disable_web_page_preview=True)
         else:
             break
 
-def print_users_android(bot, update, user): #link version of list
+
+def print_users_android(bot, update, user):  # link version of list
 
     list_len = len(usernames_from_contents)
     content = [w.replace('@', '') for w in usernames_from_contents]
     url_content = ["www.instagram.com/_u/" + i for i in content]
-    
+
     print(url_content)
 
     for x in range(0, 90, 10):
         if list_len > x:
-            bot.send_message(chat_id=user, text="🔶List {}🔶\n".format(int(x/10 + 1))+'\n'.join(str(p) for p in url_content[x:x+10]), disable_web_page_preview=True)
+            bot.send_message(chat_id=user, text="🔶List {}🔶\n".format(int(
+                x/10 + 1))+'\n'.join(str(p) for p in url_content[x:x+10]), disable_web_page_preview=True)
         else:
             break
 
@@ -237,96 +260,125 @@ def print_users_android(bot, update, user): #link version of list
 ####################################### COMMANDS ##############################################
 
 def version(bot, update):
-    update.message.reply_text("Bot version: 1.1.1 (beta)\n\nLastest update:\n1/6/2018\n- Fixed drop session message.")
+    update.message.reply_text(
+        "Bot version: 1.1.1 (beta)\n\nLastest update:\n1/6/2018\n- Fixed drop session message.")
 
-    
+
 def help(bot, update):
-    groupchat = update.message.chat.id
-    if groupchat != groupchatid:
-        update.message.reply_text('These are the available commands:\n/contact - contact admin\n/howto - how to participate\n/round - when is next round?\n/times - round times and server time\n/remove - remove entered usernames\n/version - view latest updated on bot')
+    currentGroupChatID = update.message.chat.id
+    if currentGroupChatID != GROUPCHATID:
+        update.message.reply_text(
+            'These are the available commands:\n/contact - contact admin\n/howto - how to participate\n/round - when is next round?\n/times - round times and server time\n/remove - remove entered usernames\n/version - view latest updated on bot')
     else:
-        update.message.reply_text('You cannot use this command in this chat. Please PM me to use this command😊') 
+        update.message.reply_text(
+            'You cannot use this command in this chat. Please PM me to use this command😊')
+
 
 def howto(bot, update):
-    groupchat = update.message.chat.id
-    if groupchat != groupchatid:
-        update.message.reply_text("The full instructions for how to participate in this engagement group are on this website: https://www.cameroncobbconsulting.com/instagram-engagement-groups-2019/\n\nIf you have any questions or need clarification please contact admin😊")
+    currentGroupChatID = update.message.chat.id
+    if currentGroupChatID != GROUPCHATID:
+        update.message.reply_text(
+            "The full instructions for how to participate in this engagement group are on this website: https://www.cameroncobbconsulting.com/instagram-engagement-groups-2019/\n\nIf you have any questions or need clarification please contact admin😊")
     else:
-        update.message.reply_text('You cannot use this command in this chat. Please PM me to use this command😊') 
+        update.message.reply_text(
+            'You cannot use this command in this chat. Please PM me to use this command😊')
 
 
 def contact(bot, update):
-    groupchat = update.message.chat.id
-    if groupchat != groupchatid:
-        update.message.reply_text('These are the admins that you can contact:\n@thecameroncobb')
+    currentGroupChatID = update.message.chat.id
+    if currentGroupChatID != GROUPCHATID:
+        update.message.reply_text(
+            'These are the admins that you can contact:\n@thecameroncobb')
     else:
-        update.message.reply_text('You cannot use this command in this chat. Please PM me to use this command😊') 
+        update.message.reply_text(
+            'You cannot use this command in this chat. Please PM me to use this command😊')
+
 
 def round(bot, update):
 
-    if check_in_interval(time(3,00), time(5,30), datetime.now(tz=utc).time()):
-        update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(5,30)))
+    nowTime = datetime.now(tz=utc).time()
 
-    elif check_in_interval(time(6,00), time(8,30), datetime.now(tz=utc).time()):
-        update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(8,30)))
+    if check_in_interval(time(3, 00), time(5, 30), nowTime):
+        update.message.reply_text('Server time: ' + str(nowTime.replace(
+            microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(5, 30)))
 
-    elif check_in_interval(time(9,00), time(11,30), datetime.now(tz=utc).time()):
-        update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(11,30)))
-        
-    elif check_in_interval(time(12,00), time(14,30), datetime.now(tz=utc).time()):
-        update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(14,30)))
-        
-    elif check_in_interval(time(15,00), time(17,30), datetime.now(tz=utc).time()):
-        update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(17,30)))
-        
-    elif check_in_interval(time(18,00), time(20,30), datetime.now(tz=utc).time()):
-        update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(20,30)))
-        
-    elif check_in_interval(time(21,00), time(23,30), datetime.now(tz=utc).time()):
-        update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(23,30)))
-        
-    elif check_in_interval(time(0,00), time(2,30), datetime.now(tz=utc).time()):
-        update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(2,30)))
-    
+    elif check_in_interval(time(6, 00), time(8, 30), nowTime):
+        update.message.reply_text('Server time: ' + str(nowTime.replace(
+            microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(8, 30)))
+
+    elif check_in_interval(time(9, 00), time(11, 30), nowTime):
+        update.message.reply_text('Server time: ' + str(nowTime.replace(
+            microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(11, 30)))
+
+    elif check_in_interval(time(12, 00), time(14, 30), nowTime):
+        update.message.reply_text('Server time: ' + str(nowTime.replace(
+            microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(14, 30)))
+
+    elif check_in_interval(time(15, 00), time(17, 30), nowTime):
+        update.message.reply_text('Server time: ' + str(nowTime.replace(
+            microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(17, 30)))
+
+    elif check_in_interval(time(18, 00), time(20, 30), nowTime):
+        update.message.reply_text('Server time: ' + str(nowTime.replace(
+            microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(20, 30)))
+
+    elif check_in_interval(time(21, 00), time(23, 30), nowTime):
+        update.message.reply_text('Server time: ' + str(nowTime.replace(
+            microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(23, 30)))
+
+    elif check_in_interval(time(0, 00), time(2, 30), nowTime):
+        update.message.reply_text('Server time: ' + str(nowTime.replace(
+            microsecond=0)) + ' UTC\n\nTime until next drop session: ' + str(countdown(2, 30)))
+
     else:
-         update.message.reply_text('Server time: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + '\nDrop session is currently active. Drop a username! Example: @username')
+        update.message.reply_text('Server time: ' + str(nowTime.replace(
+            microsecond=0)) + '\nDrop session is currently active. Drop a username! Example: @username')
+
 
 def times(bot, update):
-    update.message.reply_text('Current server time is: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) + ' UTC\nEngagement rounds are at:\n0:00 UTC\n3:00 UTC\n6:00 UTC\n9:00 UTC\n12:00 UTC\n15:00 UTC\n18:00 UTC\n21:00 UTC\n\nDrop sessions start 30 minutes prior.')
-    
+    update.message.reply_text('Current server time is: ' + str(datetime.now(tz=utc).time().replace(microsecond=0)) +
+                              ' UTC\nEngagement rounds are at:\n0:00 UTC\n3:00 UTC\n6:00 UTC\n9:00 UTC\n12:00 UTC\n15:00 UTC\n18:00 UTC\n21:00 UTC\n\nDrop sessions start 30 minutes prior.')
+
+
 def start(bot, update):
-    groupchat = update.message.chat.id
-    if groupchat != groupchatid:
+    currentGroupChatID = update.message.chat.id
+    if currentGroupChatID != GROUPCHATID:
         update.message.reply_text("Hi! Welcome to the Master Influencer engagement group. This engagement group is temporarily free until a stable release of this bot has been made. Use commands like /help to access more help options. I will also send you the list when you press the button at the end of the round😉\n\nIf you are new to engagement groups or want to know how to participate in this group, please visit https://www.cameroncobbconsulting.com/instagram-engagement-groups-2019/ \n\nPlease contact admin for problems, questions, or complaints.\n\nEnjoy🤗")
     else:
         update.message.reply_text('PM me /start. Don\'t do it in here😊')
 
+
 def remove(bot, update):
     message_time = datetime.now(tz=utc).time()
-    groupchat = update.message.chat.id
-    print(groupchat)
-    if groupchat == groupchatid:
+    currentGroupChatID = update.message.chat.id
+    print(currentGroupChatID)
+    if currentGroupChatID == GROUPCHATID:
         print(update.message.text + ' ' + str(message_time))
         if interval(message_time):
             try:
                 contents.pop(update.message.from_user.id)
                 print(contents)
-                update.message.reply_text('All usernames you entered have been removed 0/3 🚮')
+                update.message.reply_text(
+                    'All usernames you entered have been removed 0/3 🚮')
             except:
-                update.message.reply_text('Usernames have already been removed or you did not enter any usernames🤷‍♂️')
+                update.message.reply_text(
+                    'Usernames have already been removed or you did not enter any usernames🤷‍♂️')
         else:
-            update.message.reply_text('You cannot use this command if drop session is not active🛑')
+            update.message.reply_text(
+                'You cannot use this command if drop session is not active🛑')
     else:
-        update.message.reply_text('You can only use this command in the group chat🛑') 
+        update.message.reply_text(
+            'You can only use this command in the group chat🛑')
 
 
-######################################## ERROR ###########################################
 def error(bot, update, error):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, error)
 
-####################################### API STUFF ##################################
-def get_comment_list(username): 
+# This function is not used yet
+
+
+def get_comment_list(username):
 
     count = 100
     has_more_comments = True
@@ -340,7 +392,6 @@ def get_comment_list(username):
     user_posts = API.getUserFeed(username_id)
     info = API.LastJson
     media_id = info['items'][0]['id']
-
 
     while has_more_comments:
         _ = API.getMediaComments(media_id, max_id=max_id)
@@ -363,17 +414,15 @@ def get_comment_list(username):
         username_list.append(comment['user']['username'])
     print(username_list)
 
-###########################################################################
 
 def main():
     """Start the bot."""
     # Create the EventHandler and pass it your bot's token.
 
-    updater = Updater(bot_token)
+    updater = Updater(BOT_TOKEN)
 
     # Set up the Instagram API
     API.login()
-    
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
@@ -382,57 +431,60 @@ def main():
 
     j.run_once(server_start, 0)
 
-
 ###################### TIME INTERVALS FOR MESSAGES. ALL IN EASTERN TIME ############################################
-    
-    for time_ in [datetime(2000, 1, 1, hour=23, minute=30).time(), #23:30
-                  datetime(2000, 1, 1, hour=2, minute=30).time(),                 #2:30
-                  datetime(2000, 1, 1, hour=5, minute=30).time(),                  #5:30
-                  datetime(2000, 1, 1, hour=8, minute=30).time(),                  #8:30
-                  datetime(2000, 1, 1, hour=11, minute=30).time(),                  #11:30
-                  datetime(2000, 1, 1, hour=14, minute=30).time(),                  #14:30
-                  datetime(2000, 1, 1, hour=17, minute=30).time(),                 #17:30
-                  datetime(2000, 1, 1, hour=20, minute=30).time()]:                #20:30
-                  j.run_daily(start_drop_message, time_)
 
+    for time_ in [datetime(2000, 1, 1, hour=23, minute=30).time(),  # 23:30
+                  datetime(2000, 1, 1, hour=2, minute=30).time(),  # 2:30
+                  datetime(2000, 1, 1, hour=5, minute=30).time(),  # 5:30
+                  datetime(2000, 1, 1, hour=8, minute=30).time(),  # 8:30
+                  datetime(2000, 1, 1, hour=11, minute=30).time(),  # 11:30
+                  datetime(2000, 1, 1, hour=14, minute=30).time(),  # 14:30
+                  datetime(2000, 1, 1, hour=17, minute=30).time(),  # 17:30
+                  datetime(2000, 1, 1, hour=20, minute=30).time()]:  # 20:30
+        j.run_daily(start_drop_message, time_)
 
-    for time_ in [datetime(2000, 1, 1, hour=0, minute=00).time(), #0:00 UTC
-                  datetime(2000, 1, 1, hour=3, minute=00).time(),                #3:00 UTC
-                  datetime(2000, 1, 1, hour=6, minute=00).time(),                 #6:00 UTC
-                  datetime(2000, 1, 1, hour=9, minute=00).time(),                 #9:00 UTC
-                  datetime(2000, 1, 1, hour=12, minute=00).time(),                 #12:00 UTC
-                  datetime(2000, 1, 1, hour=15, minute=00).time(),                #15:00 UTC
-                  datetime(2000, 1, 1, hour=18, minute=00).time(),                #18:00 UTC
-                  datetime(2000, 1, 1, hour=21, minute=00).time()]:               #21:00 UTC
-                  j.run_daily(start_round_message, time_)
+    for time_ in [datetime(2000, 1, 1, hour=0, minute=00).time(),  # 0:00 UTC
+                  datetime(2000, 1, 1, hour=3, minute=00).time(),  # 3:00 UTC
+                  datetime(2000, 1, 1, hour=6, minute=00).time(),  # 6:00 UTC
+                  datetime(2000, 1, 1, hour=9, minute=00).time(),  # 9:00 UTC
+                  datetime(2000, 1, 1, hour=12, minute=00).time(),  # 12:00 UTC
+                  datetime(2000, 1, 1, hour=15, minute=00).time(),  # 15:00 UTC
+                  datetime(2000, 1, 1, hour=18, minute=00).time(),  # 18:00 UTC
+                  datetime(2000, 1, 1, hour=21, minute=00).time()]:  # 21:00 UTC
+        j.run_daily(start_round_message, time_)
 
-    for time_ in [datetime(2000, 1, 1, hour=0+1, minute=00).time(), #1:00 UTC
-                  datetime(2000, 1, 1, hour=3+1, minute=00).time(),                #4:00 UTC
-                  datetime(2000, 1, 1, hour=6+1, minute=00).time(),                 #7:00 UTC
-                  datetime(2000, 1, 1, hour=9+1, minute=00).time(),                 #10:00 UTC
-                  datetime(2000, 1, 1, hour=12+1, minute=00).time(),                 #13:00 UTC
-                  datetime(2000, 1, 1, hour=15+1, minute=00).time(),                #16:00 UTC
-                  datetime(2000, 1, 1, hour=18+1, minute=00).time(),                #19:00 UTC
-                  datetime(2000, 1, 1, hour=21+1, minute=00).time()]:               #22:00 UTC
-                  j.run_daily(end_round_message, time_)
+    for time_ in [datetime(2000, 1, 1, hour=0+1, minute=00).time(),  # 1:00 UTC
+                  datetime(2000, 1, 1, hour=3+1, minute=00).time(),  # 4:00 UTC
+                  datetime(2000, 1, 1, hour=6+1, minute=00).time(),  # 7:00 UTC
+                  datetime(2000, 1, 1, hour=9+1,
+                           minute=00).time(),  # 10:00 UTC
+                  datetime(2000, 1, 1, hour=12+1,
+                           minute=00).time(),  # 13:00 UTC
+                  datetime(2000, 1, 1, hour=15+1,
+                           minute=00).time(),  # 16:00 UTC
+                  datetime(2000, 1, 1, hour=18+1,
+                           minute=00).time(),  # 19:00 UTC
+                  datetime(2000, 1, 1, hour=21+1, minute=00).time()]:  # 22:00 UTC
+        j.run_daily(end_round_message, time_)
 
-    for time_ in [datetime(2000, 1, 1, hour=0+1, minute=00+58).time(), #1:58 UTC
-                  datetime(2000, 1, 1, hour=3+1, minute=00+58).time(),                #4:58 UTC
-                  datetime(2000, 1, 1, hour=6+1, minute=00+58).time(),                 #7:58 UTC
-                  datetime(2000, 1, 1, hour=9+1, minute=00+58).time(),                 #10:58 UTC
-                  datetime(2000, 1, 1, hour=12+1, minute=00+58).time(),                 #13:58 UTC
-                  datetime(2000, 1, 1, hour=15+1, minute=00+58).time(),                #16:58 UTC
-                  datetime(2000, 1, 1, hour=18+1, minute=00+58).time(),                #19:58 UTC
-                  datetime(2000, 1, 1, hour=21+1, minute=00+58).time()]:               #22:58 UTC
-                  j.run_daily(clear_contents, time_)
+    for time_ in [datetime(2000, 1, 1, hour=0+1, minute=00+58).time(),  # 1:58 UTC
+                  datetime(2000, 1, 1, hour=3+1,
+                           minute=00+58).time(),  # 4:58 UTC
+                  datetime(2000, 1, 1, hour=6+1,
+                           minute=00+58).time(),  # 7:58 UTC
+                  datetime(2000, 1, 1, hour=9+1, minute=00 + \
+                           58).time(),  # 10:58 UTC
+                  datetime(2000, 1, 1, hour=12+1,
+                           minute=00+58).time(),  # 13:58 UTC
+                  datetime(2000, 1, 1, hour=15+1,
+                           minute=00+58).time(),  # 16:58 UTC
+                  datetime(2000, 1, 1, hour=18+1,
+                           minute=00+58).time(),  # 19:58 UTC
+                  datetime(2000, 1, 1, hour=21+1, minute=00+58).time()]:  # 22:58 UTC
+        j.run_daily(clear_contents, time_)
 
-
-########################################################################################################
-
-    
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("start", start))
-
 
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("howto", howto))
@@ -442,21 +494,17 @@ def main():
     dp.add_handler(CommandHandler("remove", remove))
     dp.add_handler(CommandHandler("version", version))
 
-
     dp.add_handler(CallbackQueryHandler(button))
 
-######################## Test commands ############################################
-  
-    #dp.add_handler(CommandHandler("button", start_round_message)) #Testing purposes
-    #dp.add_handler(CommandHandler("drop", start_drop_message))  #Testing purposes
-    #dp.add_handler(CommandHandler("end", end_round_message))  #Testing purposes 
-    #dp.add_handler(CommandHandler("clear", clear_contents))   #Testing purposes 
-
-################################################################################
+    # Test commands used for development
+    # dp.add_handler(CommandHandler("button", start_round_message)) #Testing purposes
+    # dp.add_handler(CommandHandler("drop", start_drop_message))  #Testing purposes
+    # dp.add_handler(CommandHandler("end", end_round_message))  #Testing purposes
+    # dp.add_handler(CommandHandler("clear", clear_contents))   #Testing purposes
 
     # on noncommand i.e message - echo the message on Telegram
     dp.add_handler(MessageHandler(Filters.text, initiate_drop_session))
-    
+
     # log all errors
     dp.add_error_handler(error)
 
@@ -466,7 +514,7 @@ def main():
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT. This should be used most of the time, since
     # start_polling() is non-blocking and will stop the bot gracefully.
-    
+
     updater.idle()
 
 
